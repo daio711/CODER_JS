@@ -1,0 +1,26 @@
+* {
+    background-color: rgb(102, 149, 230);
+}
+h1, h2 {
+    text-align: center;
+    color: beige;
+    
+}
+
+div {
+    text-align: center;
+}
+
+#paciente-section, #profesional-section {
+    text-align: center;
+}
+
+label, input {
+    margin: 8px;
+    color: beige;
+}
+
+button {
+    
+    color: beige;
+}

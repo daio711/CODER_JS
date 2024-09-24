@@ -1,27 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
-    let perfil = prompt('¿Es usted un paciente? Ingrese SI o NO').toUpperCase();
-    
-    while (perfil !== 'SI' && perfil !== 'NO') {
-        alert('Debe colocar SI o NO');
-        perfil = prompt('¿Es usted un paciente? Ingrese SI o NO').toUpperCase();
-    }
+    Swal.fire({
+        title: '¿Es usted un paciente?',
+        text: "Seleccione una opción",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'SI',
+        cancelButtonText: 'NO',
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Mostrar formulario de paciente
+            mostrarFormularioPaciente();
+        } else {
+            // Mostrar formulario de profesional
+            mostrarFormularioProfesional();
+        }
+    });
 
-    // Definir los profesionales
-    const profesionales = [
-        new Profesional('Juan', 'Perez', 'Cardiología', ['09:00', '10:00', '11:00', '14:00', '15:00']),
-        new Profesional('Ana', 'Garcia', 'Dermatología', ['09:00', '11:00']),
-        new Profesional('María', 'Lopez', 'Pediatría', ['14:00', '16:00']),
-        new Profesional('Carlos', 'Perez', 'Neurología', ['08:00', '09:00', '10:00'])
-    ];
-
-    // Guardar en localStorage 
-    localStorage.setItem('profesionales', JSON.stringify(profesionales));
-
-    // Si es paciente, mostrar el formulario y agregar los profesionales al select
-    if (perfil === 'SI') {
+    function mostrarFormularioPaciente() {
         document.getElementById('paciente-section').style.display = 'block';
 
-        // Cargar profesionales en el select
+        // Obtener profesionales de la base de datos o localStorage
+        const profesionales = JSON.parse(localStorage.getItem('profesionales')) || [];
+
+        // Poblamos el select con los profesionales
         const profesionalSelect = document.getElementById('profesional-select');
         profesionales.forEach(profesional => {
             let option = document.createElement('option');
@@ -40,17 +41,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const horario = document.getElementById('horario-preferido').value;
 
             const paciente = new Paciente(nombre, apellido, edad, email, profesional, horario);
-            
-            // Guardar en localStorage
-            const pacientesRegistrados = JSON.parse(localStorage.getItem('pacientes')) || [];
-            pacientesRegistrados.push(paciente);
-            localStorage.setItem('pacientes', JSON.stringify(pacientesRegistrados));
 
-            document.getElementById('turno-mensaje').textContent = `Turno registrado para ${paciente.nombre} con el profesional ${paciente.profesional} a las ${paciente.horario}.`;
+            // Guardar en la base de datos o localStorage
+            fetch('/api/guardarPaciente', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(paciente)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    toastr.success(`Turno registrado para ${paciente.nombre} con ${paciente.profesional} a las ${paciente.horario}`);
+                } else {
+                    toastr.error('Ocurrió un error al registrar el turno');
+                }
+            })
+            .catch(err => {
+                toastr.error('Error en el servidor');
+            });
         });
+    }
 
-    } else if (perfil === 'NO') {
+    function mostrarFormularioProfesional() {
         document.getElementById('profesional-section').style.display = 'block';
+
         document.getElementById('profesional-form').addEventListener('submit', (e) => {
             e.preventDefault();
             const legajo = document.getElementById('profesional-legajo').value;
@@ -60,11 +76,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const valorConsulta = 10000;
             const total = numeroPacientes * valorConsulta;
             document.getElementById('total-factura').textContent = `El valor total a facturar hoy es: ${total}`;
+            toastr.success(`Total a facturar: ${total}`);
         });
     }
 });
 
-// Definición de clases
+// Clases
 class Profesional {
     constructor(nombre, apellido, especialidad, horarios) {
         this.nombre = nombre;
