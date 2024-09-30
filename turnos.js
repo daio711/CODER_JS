@@ -8,10 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cancelButtonText: 'NO',
     }).then((result) => {
         if (result.isConfirmed) {
-            // Mostrar formulario de paciente
             mostrarFormularioPaciente();
         } else {
-            // Mostrar formulario de profesional
             mostrarFormularioProfesional();
         }
     });
@@ -19,48 +17,43 @@ document.addEventListener('DOMContentLoaded', () => {
     function mostrarFormularioPaciente() {
         document.getElementById('paciente-section').style.display = 'block';
 
-        // Obtener profesionales de la base de datos o localStorage
-        const profesionales = JSON.parse(localStorage.getItem('profesionales')) || [];
-
-        // Poblamos el select con los profesionales
-        const profesionalSelect = document.getElementById('profesional-select');
-        profesionales.forEach(profesional => {
-            let option = document.createElement('option');
-            option.value = profesional.nombre + ' ' + profesional.apellido;
-            option.text = `${profesional.nombre} ${profesional.apellido} - ${profesional.especialidad}`;
-            profesionalSelect.add(option);
-        });
+        // Realiza carga de profesionales en un archivo JSON - ruta relativa
+        fetch('/profesionales.json')
+            .then(response => response.json())
+            .then(profesionales => {
+                const profesionalSelect = document.getElementById('profesional-select');
+                profesionales.forEach(profesional => {
+                    let option = document.createElement('option');
+                    option.value = `${profesional.nombre} ${profesional.apellido}`;
+                    option.text = `${profesional.nombre} ${profesional.apellido} - ${profesional.especialidad}`;
+                    profesionalSelect.add(option);
+                });
+            })
+            .catch(err => Toastify({
+                text: "Error al cargar profesionales",
+                backgroundColor: "linear-gradient(to right, #ff5f6d, #ffc371)",
+            }).showToast());
 
         document.getElementById('paciente-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const nombre = document.getElementById('paciente-nombre').value;
-            const apellido = document.getElementById('paciente-apellido').value;
-            const edad = document.getElementById('paciente-edad').value;
-            const email = document.getElementById('paciente-email').value;
-            const profesional = document.getElementById('profesional-select').value;
-            const horario = document.getElementById('horario-preferido').value;
+            const paciente = new Paciente(
+                document.getElementById('paciente-nombre').value,
+                document.getElementById('paciente-apellido').value,
+                document.getElementById('paciente-edad').value,
+                document.getElementById('paciente-email').value,
+                document.getElementById('profesional-select').value,
+                document.getElementById('horario-preferido').value
+            );
 
-            const paciente = new Paciente(nombre, apellido, edad, email, profesional, horario);
+            // Guardar en localStorage
+            const pacientesGuardados = JSON.parse(localStorage.getItem('pacientes')) || [];
+            pacientesGuardados.push(paciente);
+            localStorage.setItem('pacientes', JSON.stringify(pacientesGuardados));
 
-            // Guardar en la base de datos o localStorage
-            fetch('/api/guardarPaciente', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(paciente)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    toastr.success(`Turno registrado para ${paciente.nombre} con ${paciente.profesional} a las ${paciente.horario}`);
-                } else {
-                    toastr.error('Ocurrió un error al registrar el turno');
-                }
-            })
-            .catch(err => {
-                toastr.error('Error en el servidor');
-            });
+            Toastify({
+                text: `Turno registrado para ${paciente.nombre} con ${paciente.profesional} a las ${paciente.horario}`,
+                backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+            }).showToast();
         });
     }
 
@@ -76,21 +69,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const valorConsulta = 10000;
             const total = numeroPacientes * valorConsulta;
             document.getElementById('total-factura').textContent = `El valor total a facturar hoy es: ${total}`;
-            toastr.success(`Total a facturar: ${total}`);
+
+            Toastify({
+                text: `Total a facturar: ${total}`,
+                backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+            }).showToast();
         });
     }
 });
 
-// Clases
-class Profesional {
-    constructor(nombre, apellido, especialidad, horarios) {
-        this.nombre = nombre;
-        this.apellido = apellido;
-        this.especialidad = especialidad;
-        this.horarios = horarios;
-    }
-}
-
+// Clase Paciente
 class Paciente {
     constructor(nombre, apellido, edad, email, profesional, horario) {
         this.nombre = nombre;

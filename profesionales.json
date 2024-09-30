@@ -1,0 +1,22 @@
+[
+    {
+    "nombre": "Juan",
+    "apellido": "Pérez",
+    "especialidad": "Cardiología"
+    },
+    {
+    "nombre": "Ana",
+    "apellido": "Gómez",
+    "especialidad": "Pediatría"
+    },
+    {
+        "nombre": "Pedro",
+        "apellido": "Garcia",
+        "especialidad": "Neumonología"
+        },
+        {
+        "nombre": "Maria",
+        "apellido": "Diaz",
+        "especialidad": "Clinica Medica"
+        }
+]
